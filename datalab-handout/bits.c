@@ -140,7 +140,7 @@ NOTES:
  *   Rating: 1
  */
 int bitXor(int x, int y) {
-  return (x & y) & (~x & ~y);
+  return ~((x & y) | (~x & ~y));
 }
 /* 
  * tmin - return minimum two's complement integer 
@@ -149,7 +149,7 @@ int bitXor(int x, int y) {
  *   Rating: 1
  */
 int tmin(void) {
-  return ~(~0 >> !0);
+  return 1 << 31;
 }
 //2
 /*
@@ -160,7 +160,7 @@ int tmin(void) {
  *   Rating: 2
  */
 int isTmax(int x) {
-  return (~x >> 31) & 1;
+  return !(~(x + (x + 1))) & (!(x >> 31));
 }
 /* 
  * allOddBits - return 1 if all odd-numbered bits in word set to 1
@@ -170,7 +170,11 @@ int isTmax(int x) {
  *   Rating: 2
  */
 int allOddBits(int x) {
-  return !!(x & (x >> 1));
+  int a = 0xaa, b = 0xaa;
+  a = (a << 8)+ b;
+  a = (a << 8)+ b;
+  a = (a << 8)+ b;
+  return !(~((x & a) + (~a)));
 }
 /* 
  * negate - return -x 
@@ -193,7 +197,7 @@ int negate(int x) {
  *   Rating: 3
  */
 int isAsciiDigit(int x) {
-  return ((x >> 4) & 1) & ((x >> 5) & 1) & !(x >> 6) & (!((x & 8) & (x & 6)));
+  return !(1 & (((x + (~0x30 + 1)) >> 31) | ((0x39 + (~x + 1)) >> 31)));
 }
 /* 
  * conditional - same as x ? y : z 
@@ -203,7 +207,7 @@ int isAsciiDigit(int x) {
  *   Rating: 3
  */
 int conditional(int x, int y, int z) {
-  return (!(~(!x) + 1) & y) | (!(~(!x) + 1) & z);
+  return (~(~(!x) + 1) & y) | ((~(!x) + 1) & z);
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
@@ -240,7 +244,41 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 int howManyBits(int x) {
-  return 2;
+    int signMask = x >> 31;
+  int negOne = ~ 0;
+  int counter = 0; // counter to count how many bits used
+  int temp;
+  x  = (x & ~signMask) | ((~x)  & signMask);
+  
+  x |= x >> 1;
+  x |= x >> 2;
+  x |= x >> 4;
+  x |= x >> 8;
+  x |= x >> 16;
+  // this block rounds x up to closest 2^w - 1
+  
+  temp = x >> 16;
+  counter += (temp << 4) & 16;
+  x = temp | ((temp + negOne) & x);
+
+  temp = x >> 8;
+  counter += (temp << 3) & 8;
+  x = temp | ((temp + negOne) & x);
+
+  temp = x >> 4;
+  counter += (temp << 2) & 4;
+  x = temp | ((temp + negOne) & x);
+
+  temp = x >> 2;
+  counter += (temp << 1) & 2;
+  x = temp | ((temp + negOne) & x);
+
+  temp = x >> 1;
+  counter += temp & 1;
+  x = temp | ((temp + negOne) & x);
+
+  counter += x;
+  return counter + 1;
 }
 //float
 /* 
